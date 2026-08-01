@@ -20,10 +20,7 @@ def get_engine():
     global _engine
     if _engine is None:
         settings = get_settings()
-        # Railway PostgreSQL requires SSL
-        connect_args = {}
-        if "railway" in settings.database_url or "ssl" not in settings.database_url.lower():
-            connect_args = {"ssl": "prefer"}
+        connect_args = {"ssl": "require"} if "supabase" in settings.database_url else {"ssl": "prefer"}
         _engine = create_async_engine(
             settings.database_url,
             echo=settings.debug,
