@@ -1,83 +1,49 @@
 {% extends "base.html" %}
 {% set active_page = "logs" %}
-
 {% block title %}سجل الأحداث{% endblock %}
 {% block page_title %}سجل الأحداث{% endblock %}
 
 {% block extra_styles %}
 <style>
-.level-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    font-family: monospace;
-}
-
-.level-ERROR { background: rgba(255,107,107,0.15); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.3); }
-.level-WARNING { background: rgba(255,209,102,0.15); color: #ffd166; border: 1px solid rgba(255,209,102,0.3); }
-.level-INFO { background: rgba(6,214,160,0.15); color: #06d6a0; border: 1px solid rgba(6,214,160,0.3); }
-.level-DEBUG { background: rgba(94,114,228,0.15); color: #94a3b8; border: 1px solid rgba(94,114,228,0.3); }
-
 .event-code {
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: var(--accent-primary);
-    background: rgba(108,99,255,0.08);
-    padding: 2px 8px;
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--red-light);
+    background: rgba(220,20,20,0.06);
+    padding: 2px 7px;
     border-radius: 4px;
 }
 
-.message-cell {
-    max-width: 280px;
+.msg-cut {
+    max-width: 260px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 12px;
-    color: var(--text-secondary);
+    color: var(--text-2);
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Filters -->
 <form method="GET" action="/dashboard/logs">
-    <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
-        <select name="level" class="filter-select" style="
-            padding: 9px 14px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            color: var(--text-primary);
-            font-size: 13px;
-            font-family: 'Cairo', sans-serif;
-            cursor: pointer;
-        ">
-            <option value="">جميع المستويات</option>
-            <option value="ERROR" {% if level == "ERROR" %}selected{% endif %}>خطأ</option>
-            <option value="WARNING" {% if level == "WARNING" %}selected{% endif %}>تحذير</option>
-            <option value="INFO" {% if level == "INFO" %}selected{% endif %}>معلومة</option>
+    <div style="display:flex;gap:10px;margin-bottom:18px;align-items:center;flex-wrap:wrap;">
+        <select name="level" class="inp" style="cursor:pointer;">
+            <option value="">كل المستويات</option>
+            <option value="ERROR" {% if level=="ERROR" %}selected{% endif %}>خطأ</option>
+            <option value="WARNING" {% if level=="WARNING" %}selected{% endif %}>تحذير</option>
+            <option value="INFO" {% if level=="INFO" %}selected{% endif %}>معلومة</option>
         </select>
-        <button type="submit" class="btn btn-primary">
-            <i class="fas fa-filter"></i>
-            تصفية
-        </button>
-        <a href="/dashboard/logs" class="btn btn-outline">
-            <i class="fas fa-times"></i>
-            إعادة تعيين
-        </a>
-        <div style="margin-right: auto; font-size: 13px; color: var(--text-muted); background: var(--bg-card); border: 1px solid var(--border-color); padding: 8px 14px; border-radius: 10px;">
-            <i class="fas fa-list"></i>
-            إجمالي: <strong>{{ total }}</strong>
+        <button type="submit" class="btn btn-red"><i class="fas fa-filter"></i> تصفية</button>
+        <a href="/dashboard/logs" class="btn btn-ghost"><i class="fas fa-times"></i> إعادة تعيين</a>
+        <div style="margin-right:auto;font-size:12px;color:var(--text-2);background:var(--bg-card);border:1px solid var(--border);padding:7px 13px;border-radius:8px;">
+            {{ total }} سجل
         </div>
     </div>
 </form>
 
 <div class="card">
-    <div class="table-container">
+    <div class="tbl-wrap">
         {% if logs %}
         <table>
             <thead>
@@ -87,69 +53,52 @@
                     <th>الحدث</th>
                     <th>الرسالة</th>
                     <th>المصدر</th>
-                    <th>معرّف التعليق</th>
                     <th>الوقت</th>
                 </tr>
             </thead>
             <tbody>
                 {% for log in logs %}
                 <tr>
-                    <td style="color: var(--text-muted); font-size: 12px;">{{ log.id }}</td>
+                    <td style="color:var(--text-3);font-size:11px;">{{ log.id }}</td>
                     <td>
-                        <span class="level-badge level-{{ log.level }}">{{ log.level }}</span>
+                        <span class="badge {% if log.level=='ERROR' %}b-red{% elif log.level=='WARNING' %}b-orange{% elif log.level=='INFO' %}b-green{% else %}b-gray{% endif %}">
+                            {{ log.level }}
+                        </span>
                     </td>
-                    <td>
-                        <span class="event-code">{{ log.event }}</span>
-                    </td>
-                    <td>
-                        <div class="message-cell" title="{{ log.message or '' }}">
-                            {{ log.message or '—' }}
-                        </div>
-                    </td>
-                    <td style="font-size: 12px; color: var(--text-muted);">{{ log.source or '—' }}</td>
-                    <td style="font-size: 11px; color: var(--text-muted);">
-                        {% if log.comment_id %}
-                        {{ log.comment_id[:15] }}...
-                        {% else %}—{% endif %}
-                    </td>
-                    <td style="font-size: 12px; color: var(--text-muted);">
-                        {{ log.created_at[:16].replace('T', ' ') if log.created_at else '—' }}
+                    <td><span class="event-code">{{ log.event }}</span></td>
+                    <td><div class="msg-cut" title="{{ log.message or '' }}">{{ log.message or '—' }}</div></td>
+                    <td style="font-size:11px;color:var(--text-3);">{{ log.source or '—' }}</td>
+                    <td style="font-size:11px;color:var(--text-3);">
+                        {{ log.created_at[:16].replace('T',' ') if log.created_at else '—' }}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <div class="empty-state">
-            <i class="fas fa-file-alt"></i>
-            <p>لا توجد سجلات بعد</p>
+        <div class="empty">
+            <i class="fas fa-list-alt"></i>
+            <p>لا توجد سجلات</p>
         </div>
         {% endif %}
     </div>
 
-    <!-- Pagination -->
     {% if total_pages > 1 %}
     <div class="pagination">
         {% if page > 1 %}
-        <a href="?level={{ level }}&page={{ page - 1 }}" class="page-btn">
-            <i class="fas fa-chevron-right"></i>
-        </a>
+        <a href="?level={{ level }}&page={{ page-1 }}" class="pg-btn"><i class="fas fa-chevron-right"></i></a>
         {% else %}
-        <span class="page-btn disabled"><i class="fas fa-chevron-right"></i></span>
+        <span class="pg-btn disabled"><i class="fas fa-chevron-right"></i></span>
         {% endif %}
 
-        {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
-        <a href="?level={{ level }}&page={{ p }}" class="page-btn {% if p == page %}active{% endif %}">
-            {{ p }}
-        </a>
+        {% for p in range([1,page-2]|max, [total_pages+1,page+3]|min) %}
+        <a href="?level={{ level }}&page={{ p }}" class="pg-btn {% if p==page %}active{% endif %}">{{ p }}</a>
         {% endfor %}
 
         {% if page < total_pages %}
-        <a href="?level={{ level }}&page={{ page + 1 }}" class="page-btn">
-            <i class="fas fa-chevron-left"></i>
-        </a>
+        <a href="?level={{ level }}&page={{ page+1 }}" class="pg-btn"><i class="fas fa-chevron-left"></i></a>
         {% else %}
-        <span class="page-btn disabled"><i class="fas fa-chevron-left"></i></span>
+        <span class="pg-btn disabled"><i class="fas fa-chevron-left"></i></span>
         {% endif %}
     </div>
     {% endif %}

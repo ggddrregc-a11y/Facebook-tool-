@@ -1,115 +1,66 @@
 {% extends "base.html" %}
 {% set active_page = "comments" %}
-
 {% block title %}التعليقات{% endblock %}
 {% block page_title %}إدارة التعليقات{% endblock %}
 
 {% block extra_styles %}
 <style>
-.filters-bar {
+.filters {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
 }
 
-.filter-input {
-    padding: 9px 14px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    color: var(--text-primary);
-    font-size: 13px;
-    font-family: 'Cairo', sans-serif;
-    min-width: 200px;
-    direction: rtl;
-}
+.filters .inp { min-width: 220px; }
 
-.filter-input:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-}
-
-.filter-select {
-    padding: 9px 14px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    color: var(--text-primary);
-    font-size: 13px;
-    font-family: 'Cairo', sans-serif;
-    cursor: pointer;
-    direction: rtl;
-}
-
-.filter-select:focus { outline: none; border-color: var(--accent-primary); }
-
-.total-count {
+.total-badge {
     margin-right: auto;
-    font-size: 13px;
-    color: var(--text-muted);
+    font-size: 12px;
+    color: var(--text-2);
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    padding: 8px 14px;
-    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 7px 13px;
+    border-radius: 8px;
 }
 
-.comment-cell {
-    max-width: 220px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.reply-cell {
+.txt-cut {
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--accent-success);
-    font-size: 12px;
 }
 
-.no-reply { color: var(--text-muted); font-size: 12px; }
+.reply-txt {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    color: #22c55e;
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Filters -->
 <form method="GET" action="/dashboard/comments">
-    <div class="filters-bar">
-        <input
-            type="text"
-            name="q"
-            class="filter-input"
-            placeholder="🔍 بحث في التعليقات..."
-            value="{{ q }}"
-        >
-        <select name="emotion" class="filter-select">
-            <option value="">جميع المشاعر</option>
-            {% for emo in ["دعاء", "حزن", "فرح", "حب", "إعجاب", "سؤال", "غضب", "إيموجي", "محايد"] %}
-            <option value="{{ emo }}" {% if emotion == emo %}selected{% endif %}>{{ emo }}</option>
+    <div class="filters">
+        <input type="text" name="q" class="inp" placeholder="🔍 بحث..." value="{{ q }}">
+        <select name="emotion" class="inp" style="cursor:pointer;">
+            <option value="">كل المشاعر</option>
+            {% for e in ["دعاء","حزن","فرح","حب","إعجاب","سؤال","غضب","إيموجي","محايد"] %}
+            <option value="{{ e }}" {% if emotion == e %}selected{% endif %}>{{ e }}</option>
             {% endfor %}
         </select>
-        <button type="submit" class="btn btn-primary">
-            <i class="fas fa-search"></i>
-            بحث
-        </button>
-        <a href="/dashboard/comments" class="btn btn-outline">
-            <i class="fas fa-times"></i>
-            إعادة تعيين
-        </a>
-        <div class="total-count">
-            <i class="fas fa-list"></i>
-            إجمالي: <strong>{{ total }}</strong> تعليق
-        </div>
+        <button type="submit" class="btn btn-red"><i class="fas fa-search"></i> بحث</button>
+        <a href="/dashboard/comments" class="btn btn-ghost"><i class="fas fa-times"></i> إعادة تعيين</a>
+        <div class="total-badge"><i class="fas fa-list"></i> {{ total }} تعليق</div>
     </div>
 </form>
 
-<!-- Table -->
 <div class="card">
-    <div class="table-container">
+    <div class="tbl-wrap">
         {% if comments %}
         <table>
             <thead>
@@ -120,112 +71,86 @@
                     <th>الشعور</th>
                     <th>الرد</th>
                     <th>الحالة</th>
-                    <th>التوقيت</th>
+                    <th>الوقت</th>
                 </tr>
             </thead>
             <tbody>
-                {% for comment in comments %}
+                {% set colors = {"دعاء":"#a78bfa","حزن":"#60a5fa","فرح":"#fbbf24","حب":"#f472b6","إعجاب":"#34d399","سؤال":"#67e8f9","غضب":"#dc1414","إيموجي":"#fb923c","محايد":"#555"} %}
+                {% for c in comments %}
                 <tr>
-                    <td style="color: var(--text-muted); font-size: 12px;">{{ comment.id }}</td>
+                    <td style="color:var(--text-3);font-size:11px;">{{ c.id }}</td>
                     <td>
-                        <div style="font-size: 13px; font-weight: 600;">
-                            {{ comment.sender_name or "مجهول" }}
-                        </div>
-                        <div style="font-size: 11px; color: var(--text-muted);">{{ comment.sender_id[:10] }}...</div>
+                        <div style="font-size:13px;font-weight:700;">{{ c.sender_name or "مجهول" }}</div>
+                        <div style="font-size:10px;color:var(--text-3);">{{ c.sender_id[:12] }}...</div>
                     </td>
                     <td>
-                        <div class="comment-cell" title="{{ comment.comment_text }}">
-                            {% if comment.is_edited %}
-                            <span class="badge badge-warning" style="font-size:10px; margin-left: 4px;">معدّل</span>
-                            {% endif %}
-                            {{ comment.comment_text }}
+                        <div class="txt-cut" title="{{ c.comment_text }}">
+                            {% if c.is_edited %}<span class="badge b-orange" style="font-size:9px;">معدّل</span> {% endif %}
+                            {{ c.comment_text }}
                         </div>
                     </td>
                     <td>
-                        {% if comment.emotion %}
-                        {% set emotion_colors_map = {
-                            "دعاء": "#a78bfa", "حزن": "#60a5fa", "فرح": "#fbbf24",
-                            "حب": "#f472b6", "إعجاب": "#34d399", "سؤال": "#67e8f9",
-                            "غضب": "#f87171", "إيموجي": "#fb923c", "محايد": "#94a3b8"
-                        } %}
-                        <span style="color: {{ emotion_colors_map.get(comment.emotion, '#8892b0') }}; font-weight: 600; font-size: 13px;">
-                            {{ comment.emotion }}
-                        </span>
+                        {% if c.emotion %}
+                        <span style="color:{{ colors.get(c.emotion,'#888') }};font-weight:700;font-size:13px;">{{ c.emotion }}</span>
                         {% else %}
-                        <span style="color: var(--text-muted); font-size: 12px;">—</span>
+                        <span style="color:var(--text-3);">—</span>
                         {% endif %}
                     </td>
                     <td>
-                        {% if comment.ai_reply %}
-                        <div class="reply-cell" title="{{ comment.ai_reply }}">
-                            {{ comment.ai_reply }}
-                        </div>
-                        {% elif comment.is_spam %}
-                        <span class="no-reply">مرفوض - سبام</span>
+                        {% if c.ai_reply %}
+                        <div class="reply-txt" title="{{ c.ai_reply }}">{{ c.ai_reply }}</div>
+                        {% elif c.is_spam %}
+                        <span style="font-size:11px;color:var(--text-3);">مرفوض</span>
                         {% else %}
-                        <span class="no-reply">لم يتم الرد</span>
+                        <span style="font-size:11px;color:var(--text-3);">—</span>
                         {% endif %}
                     </td>
                     <td>
-                        {% if comment.is_spam %}
-                        <span class="badge badge-warning"><i class="fas fa-ban"></i> سبام</span>
-                        {% elif comment.reply_sent %}
-                        <span class="badge badge-success">
-                            {% if comment.reused_reply %}
-                            <i class="fas fa-copy"></i> مكرر
+                        {% if c.is_spam %}
+                        <span class="badge b-orange"><i class="fas fa-ban"></i> سبام</span>
+                        {% elif c.reply_sent %}
+                            {% if c.reused_reply %}
+                            <span class="badge b-blue"><i class="fas fa-copy"></i> مكرر</span>
                             {% else %}
-                            <i class="fas fa-check"></i> تم الرد
+                            <span class="badge b-green"><i class="fas fa-check"></i> تم الرد</span>
                             {% endif %}
-                        </span>
-                        {% elif comment.reply_failed %}
-                        <span class="badge badge-danger" title="{{ comment.error_message or '' }}">
-                            <i class="fas fa-times"></i> فشل
-                        </span>
+                        {% elif c.reply_failed %}
+                        <span class="badge b-red" title="{{ c.error_message or '' }}"><i class="fas fa-times"></i> فشل</span>
                         {% else %}
-                        <span class="badge badge-secondary">
-                            <i class="fas fa-clock"></i> انتظار
-                        </span>
+                        <span class="badge b-gray"><i class="fas fa-clock"></i> انتظار</span>
                         {% endif %}
                     </td>
-                    <td style="font-size: 12px; color: var(--text-muted);">
-                        {{ comment.created_at.strftime('%H:%M') }}<br>
-                        {{ comment.created_at.strftime('%d/%m/%Y') }}
+                    <td style="font-size:11px;color:var(--text-3);">
+                        {{ c.created_at.strftime('%H:%M') }}<br>{{ c.created_at.strftime('%d/%m/%Y') }}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <div class="empty-state">
+        <div class="empty">
             <i class="fas fa-comments"></i>
-            <p>لا توجد تعليقات تطابق البحث</p>
+            <p>لا توجد تعليقات</p>
         </div>
         {% endif %}
     </div>
 
-    <!-- Pagination -->
     {% if total_pages > 1 %}
     <div class="pagination">
         {% if page > 1 %}
-        <a href="?q={{ q }}&emotion={{ emotion }}&page={{ page - 1 }}" class="page-btn">
-            <i class="fas fa-chevron-right"></i>
-        </a>
+        <a href="?q={{ q }}&emotion={{ emotion }}&page={{ page-1 }}" class="pg-btn"><i class="fas fa-chevron-right"></i></a>
         {% else %}
-        <span class="page-btn disabled"><i class="fas fa-chevron-right"></i></span>
+        <span class="pg-btn disabled"><i class="fas fa-chevron-right"></i></span>
         {% endif %}
 
-        {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
-        <a href="?q={{ q }}&emotion={{ emotion }}&page={{ p }}" class="page-btn {% if p == page %}active{% endif %}">
-            {{ p }}
-        </a>
+        {% for p in range([1,page-2]|max, [total_pages+1,page+3]|min) %}
+        <a href="?q={{ q }}&emotion={{ emotion }}&page={{ p }}" class="pg-btn {% if p==page %}active{% endif %}">{{ p }}</a>
         {% endfor %}
 
         {% if page < total_pages %}
-        <a href="?q={{ q }}&emotion={{ emotion }}&page={{ page + 1 }}" class="page-btn">
-            <i class="fas fa-chevron-left"></i>
-        </a>
+        <a href="?q={{ q }}&emotion={{ emotion }}&page={{ page+1 }}" class="pg-btn"><i class="fas fa-chevron-left"></i></a>
         {% else %}
-        <span class="page-btn disabled"><i class="fas fa-chevron-left"></i></span>
+        <span class="pg-btn disabled"><i class="fas fa-chevron-left"></i></span>
         {% endif %}
     </div>
     {% endif %}

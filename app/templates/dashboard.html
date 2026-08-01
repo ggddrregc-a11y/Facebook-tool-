@@ -1,53 +1,49 @@
 {% extends "base.html" %}
 {% set active_page = "dashboard" %}
-
 {% block title %}لوحة التحكم{% endblock %}
 {% block page_title %}لوحة التحكم{% endblock %}
 
 {% block extra_styles %}
 <style>
-.chart-container {
-    position: relative;
-    height: 260px;
-}
+.chart-wrap { position: relative; height: 250px; }
 
-.emotion-grid {
+.emo-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 10px;
-    margin-top: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 4px;
 }
 
-.emotion-item {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 14px;
+.emo-item {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 10px;
     text-align: center;
-    transition: border-color 0.2s;
+    transition: all 0.2s;
+    cursor: default;
 }
 
-.emotion-item:hover { border-color: var(--accent-primary); }
+.emo-item:hover { border-color: var(--border-red); }
+.emo-emoji { font-size: 22px; margin-bottom: 4px; }
+.emo-name { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
+.emo-cnt { font-size: 18px; font-weight: 900; }
 
-.emotion-emoji { font-size: 24px; margin-bottom: 6px; }
-.emotion-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-.emotion-count { font-size: 20px; font-weight: 800; }
-
-.recent-comment {
+.recent-item {
     display: flex;
     gap: 12px;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--border-color);
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border);
     align-items: flex-start;
 }
 
-.recent-comment:last-child { border-bottom: none; }
+.recent-item:last-child { border-bottom: none; padding-bottom: 0; }
 
-.comment-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+.r-avatar {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #1a1a1a, #111);
+    border: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -55,101 +51,130 @@
     flex-shrink: 0;
 }
 
-.comment-body { flex: 1; min-width: 0; }
-.comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
-.comment-sender { font-size: 13px; font-weight: 600; }
-.comment-time { font-size: 11px; color: var(--text-muted); }
-.comment-text { font-size: 13px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.comment-reply { font-size: 12px; color: var(--accent-success); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-body { flex: 1; min-width: 0; }
+
+.r-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 3px;
+}
+
+.r-name { font-size: 13px; font-weight: 700; }
+.r-time { font-size: 10px; color: var(--text-3); margin-right: auto; }
+.r-text { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.r-reply { font-size: 11px; color: #22c55e; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.mini-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 14px;
+}
+
+.mini-stat {
+    background: var(--bg-2);
+    padding: 12px;
+    text-align: center;
+}
+
+.mini-stat-val { font-size: 18px; font-weight: 900; }
+.mini-stat-lbl { font-size: 10px; color: var(--text-3); margin-top: 2px; }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Stats Cards -->
-<div class="stats-grid">
-    <div class="stat-card primary">
-        <div class="stat-icon primary"><i class="fas fa-comments"></i></div>
-        <div class="stat-value">{{ stats.total_comments }}</div>
-        <div class="stat-label">إجمالي التعليقات</div>
+
+<!-- Stats Row -->
+<div class="stats-row mb">
+    <div class="stat s-red">
+        <div class="stat-top">
+            <div>
+                <div class="stat-val">{{ stats.total_comments }}</div>
+                <div class="stat-lbl">إجمالي التعليقات</div>
+            </div>
+            <div class="stat-icon"><i class="fas fa-comments"></i></div>
+        </div>
     </div>
-    <div class="stat-card success">
-        <div class="stat-icon success"><i class="fas fa-reply"></i></div>
-        <div class="stat-value">{{ stats.total_replies }}</div>
-        <div class="stat-label">عدد الردود</div>
+    <div class="stat s-green">
+        <div class="stat-top">
+            <div>
+                <div class="stat-val">{{ stats.total_replies }}</div>
+                <div class="stat-lbl">الردود المرسلة</div>
+            </div>
+            <div class="stat-icon"><i class="fas fa-reply"></i></div>
+        </div>
     </div>
-    <div class="stat-card danger">
-        <div class="stat-icon danger"><i class="fas fa-times-circle"></i></div>
-        <div class="stat-value">{{ stats.failed_replies }}</div>
-        <div class="stat-label">الردود الفاشلة</div>
+    <div class="stat s-orange">
+        <div class="stat-top">
+            <div>
+                <div class="stat-val">{{ stats.failed_replies }}</div>
+                <div class="stat-lbl">الردود الفاشلة</div>
+            </div>
+            <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+        </div>
     </div>
-    <div class="stat-card warning">
-        <div class="stat-icon warning"><i class="fas fa-calendar-day"></i></div>
-        <div class="stat-value">{{ stats.today_comments }}</div>
-        <div class="stat-label">تعليقات اليوم</div>
+    <div class="stat s-blue">
+        <div class="stat-top">
+            <div>
+                <div class="stat-val">{{ stats.today_comments }}</div>
+                <div class="stat-lbl">تعليقات اليوم</div>
+            </div>
+            <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+        </div>
     </div>
 </div>
 
-<!-- Charts + Emotions Row -->
-<div class="grid-2 mb-20">
+<!-- Charts Row -->
+<div class="g2 mb">
     <!-- Emotion Chart -->
     <div class="card">
-        <div class="card-header">
-            <div class="card-title">
-                <i class="fas fa-chart-bar"></i>
-                توزيع المشاعر
-            </div>
+        <div class="card-head">
+            <div class="card-title"><i class="fas fa-chart-donut"></i> توزيع المشاعر</div>
         </div>
-        <div class="chart-container">
+        <div class="chart-wrap">
             <canvas id="emotionChart"></canvas>
         </div>
     </div>
 
     <!-- Emotion Grid -->
     <div class="card">
-        <div class="card-header">
-            <div class="card-title">
-                <i class="fas fa-heart"></i>
-                إحصائيات المشاعر
-            </div>
+        <div class="card-head">
+            <div class="card-title"><i class="fas fa-heart"></i> إحصائيات المشاعر</div>
         </div>
-        <div class="emotion-grid">
-            {% set emotion_emojis = {
-                "دعاء": "🤲", "حزن": "😢", "فرح": "😊",
-                "حب": "❤️", "إعجاب": "👍", "سؤال": "❓",
-                "غضب": "😡", "إيموجي": "😀", "محايد": "😐"
-            } %}
-            {% set emotion_colors = {
-                "دعاء": "#a78bfa", "حزن": "#60a5fa", "فرح": "#fbbf24",
-                "حب": "#f472b6", "إعجاب": "#34d399", "سؤال": "#67e8f9",
-                "غضب": "#f87171", "إيموجي": "#fb923c", "محايد": "#94a3b8"
-            } %}
+        {% set emojis = {"دعاء":"🤲","حزن":"😢","فرح":"😊","حب":"❤️","إعجاب":"👍","سؤال":"❓","غضب":"😡","إيموجي":"😀","محايد":"😐"} %}
+        {% set colors = {"دعاء":"#a78bfa","حزن":"#60a5fa","فرح":"#fbbf24","حب":"#f472b6","إعجاب":"#34d399","سؤال":"#67e8f9","غضب":"#dc1414","إيموجي":"#fb923c","محايد":"#555"} %}
+        <div class="emo-grid">
             {% for stat in stats.emotion_stats %}
-            <div class="emotion-item">
-                <div class="emotion-emoji">{{ emotion_emojis.get(stat.emotion, "💬") }}</div>
-                <div class="emotion-name" style="color: {{ emotion_colors.get(stat.emotion, '#8892b0') }}">{{ stat.emotion }}</div>
-                <div class="emotion-count" style="color: {{ emotion_colors.get(stat.emotion, '#8892b0') }}">{{ stat.count }}</div>
+            <div class="emo-item">
+                <div class="emo-emoji">{{ emojis.get(stat.emotion, "💬") }}</div>
+                <div class="emo-name" style="color:{{ colors.get(stat.emotion,'#888') }}">{{ stat.emotion }}</div>
+                <div class="emo-cnt" style="color:{{ colors.get(stat.emotion,'#888') }}">{{ stat.count }}</div>
             </div>
             {% else %}
-            <div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 20px; font-size: 13px;">
-                لا توجد بيانات مشاعر بعد
+            <div style="grid-column:1/-1; text-align:center; color:var(--text-3); padding:20px; font-size:13px;">
+                لا توجد بيانات بعد
             </div>
             {% endfor %}
         </div>
 
-        <!-- Extra stats -->
-        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; gap: 16px;">
-            <div style="flex:1; text-align:center;">
-                <div style="font-size: 20px; font-weight: 800; color: var(--accent-warning);">{{ stats.spam_comments }}</div>
-                <div style="font-size: 11px; color: var(--text-muted);">سبام</div>
+        <div class="mini-stats">
+            <div class="mini-stat">
+                <div class="mini-stat-val" style="color:#f97316;">{{ stats.spam_comments }}</div>
+                <div class="mini-stat-lbl">سبام</div>
             </div>
-            <div style="flex:1; text-align:center;">
-                <div style="font-size: 20px; font-weight: 800; color: var(--accent-secondary);">{{ stats.duplicate_comments }}</div>
-                <div style="font-size: 11px; color: var(--text-muted);">مكررة</div>
+            <div class="mini-stat">
+                <div class="mini-stat-val" style="color:#60a5fa;">{{ stats.duplicate_comments }}</div>
+                <div class="mini-stat-lbl">مكررة</div>
             </div>
-            <div style="flex:1; text-align:center;">
-                {% set rate = ((stats.total_replies / stats.total_comments * 100) | round(1)) if stats.total_comments > 0 else 0 %}
-                <div style="font-size: 20px; font-weight: 800; color: var(--accent-success);">{{ rate }}%</div>
-                <div style="font-size: 11px; color: var(--text-muted);">نسبة الرد</div>
+            <div class="mini-stat">
+                {% set rate = ((stats.total_replies / stats.total_comments * 100)|round(1)) if stats.total_comments > 0 else 0 %}
+                <div class="mini-stat-val" style="color:#22c55e;">{{ rate }}%</div>
+                <div class="mini-stat-lbl">نسبة الرد</div>
             </div>
         </div>
     </div>
@@ -157,76 +182,70 @@
 
 <!-- Recent Comments -->
 <div class="card">
-    <div class="card-header">
-        <div class="card-title">
-            <i class="fas fa-clock"></i>
-            آخر التعليقات
-        </div>
-        <a href="/dashboard/comments" class="btn btn-outline" style="font-size:12px; padding:7px 14px;">
-            <i class="fas fa-arrow-left"></i>
-            عرض الكل
+    <div class="card-head">
+        <div class="card-title"><i class="fas fa-clock"></i> آخر التعليقات</div>
+        <a href="/dashboard/comments" class="btn btn-ghost">
+            <i class="fas fa-arrow-left"></i> عرض الكل
         </a>
     </div>
 
     {% if recent_comments %}
-    {% for comment in recent_comments %}
-    <div class="recent-comment">
-        <div class="comment-avatar">
-            {{ emotion_emojis.get(comment.emotion, "💬") if comment.emotion else "💬" }}
+    {% for c in recent_comments %}
+    <div class="recent-item">
+        <div class="r-avatar">
+            {{ emojis.get(c.emotion, "💬") if c.emotion else "💬" }}
         </div>
-        <div class="comment-body">
-            <div class="comment-header">
-                <span class="comment-sender">{{ comment.sender_name or comment.sender_id }}</span>
-                {% if comment.emotion %}
-                <span class="badge badge-primary" style="font-size:10px;">{{ comment.emotion }}</span>
+        <div class="r-body">
+            <div class="r-header">
+                <span class="r-name">{{ c.sender_name or c.sender_id }}</span>
+                {% if c.emotion %}
+                <span class="badge b-gray" style="font-size:10px;">{{ c.emotion }}</span>
                 {% endif %}
-                {% if comment.reply_sent %}
-                <span class="badge badge-success" style="font-size:10px;"><i class="fas fa-check"></i> تم الرد</span>
-                {% elif comment.reply_failed %}
-                <span class="badge badge-danger" style="font-size:10px;"><i class="fas fa-times"></i> فشل</span>
-                {% elif comment.is_spam %}
-                <span class="badge badge-warning" style="font-size:10px;">سبام</span>
+                {% if c.reply_sent %}
+                <span class="badge b-green" style="font-size:10px;"><i class="fas fa-check"></i> تم الرد</span>
+                {% elif c.reply_failed %}
+                <span class="badge b-red" style="font-size:10px;"><i class="fas fa-times"></i> فشل</span>
+                {% elif c.is_spam %}
+                <span class="badge b-orange" style="font-size:10px;">سبام</span>
                 {% endif %}
-                <span class="comment-time">{{ comment.created_at.strftime('%H:%M - %d/%m') }}</span>
+                <span class="r-time">{{ c.created_at.strftime('%H:%M') }}</span>
             </div>
-            <div class="comment-text">{{ comment.comment_text }}</div>
-            {% if comment.ai_reply %}
-            <div class="comment-reply"><i class="fas fa-robot" style="font-size:10px;"></i> {{ comment.ai_reply }}</div>
+            <div class="r-text">{{ c.comment_text }}</div>
+            {% if c.ai_reply %}
+            <div class="r-reply"><i class="fas fa-robot" style="font-size:9px;"></i> {{ c.ai_reply }}</div>
             {% endif %}
         </div>
     </div>
     {% endfor %}
     {% else %}
-    <div class="empty-state">
+    <div class="empty">
         <i class="fas fa-comments"></i>
         <p>لا توجد تعليقات بعد</p>
     </div>
     {% endif %}
 </div>
+
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
 const emotionData = {{ stats.emotion_stats | tojson }};
-
-const emotionColors = {
-    "دعاء": "#a78bfa", "حزن": "#60a5fa", "فرح": "#fbbf24",
-    "حب": "#f472b6", "إعجاب": "#34d399", "سؤال": "#67e8f9",
-    "غضب": "#f87171", "إيموجي": "#fb923c", "محايد": "#94a3b8"
+const colorMap = {
+    "دعاء":"#a78bfa","حزن":"#60a5fa","فرح":"#fbbf24","حب":"#f472b6",
+    "إعجاب":"#34d399","سؤال":"#67e8f9","غضب":"#dc1414","إيموجي":"#fb923c","محايد":"#555"
 };
 
 if (emotionData.length > 0) {
-    const ctx = document.getElementById('emotionChart').getContext('2d');
-    new Chart(ctx, {
+    new Chart(document.getElementById('emotionChart'), {
         type: 'doughnut',
         data: {
             labels: emotionData.map(e => e.emotion),
             datasets: [{
                 data: emotionData.map(e => e.count),
-                backgroundColor: emotionData.map(e => emotionColors[e.emotion] || '#8892b0'),
-                borderColor: '#1e2130',
+                backgroundColor: emotionData.map(e => colorMap[e.emotion] || '#555'),
+                borderColor: '#111',
                 borderWidth: 3,
-                hoverOffset: 6,
+                hoverOffset: 8,
             }]
         },
         options: {
@@ -236,25 +255,22 @@ if (emotionData.length > 0) {
                 legend: {
                     position: 'right',
                     labels: {
-                        color: '#8892b0',
+                        color: '#888',
                         font: { family: 'Cairo', size: 12 },
-                        padding: 12,
+                        padding: 10,
                         usePointStyle: true,
-                        pointStyleWidth: 10,
                     }
                 },
                 tooltip: {
-                    callbacks: {
-                        label: (ctx) => ` ${ctx.label}: ${ctx.parsed} تعليق`
-                    }
+                    callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` }
                 }
             },
-            cutout: '65%',
+            cutout: '68%',
         }
     });
 } else {
     document.getElementById('emotionChart').parentElement.innerHTML =
-        '<div class="empty-state"><i class="fas fa-chart-pie"></i><p>لا توجد بيانات للعرض</p></div>';
+        '<div class="empty"><i class="fas fa-chart-pie"></i><p>لا توجد بيانات</p></div>';
 }
 </script>
 {% endblock %}

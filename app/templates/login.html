@@ -5,172 +5,157 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تسجيل الدخول | Remix AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Cairo', sans-serif;
-            background: #0f1117;
-            color: #e8eaf6;
+            background: #0a0a0a;
+            color: #fff;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             direction: rtl;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated background */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(220,20,20,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(220,20,20,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(220,20,20,0.12) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            animation: pulse-glow 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #dc1414;
+            border-radius: 50%;
+            animation: float-particle linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes float-particle {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-100px) translateX(30px); opacity: 0; }
+        }
+
+        /* Main container */
+        .login-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 420px;
+        }
+
+        /* Logo section */
+        .logo-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-img-wrap {
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 0;
+            position: relative;
+        }
+
+        .logo-img-wrap::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(220,20,20,0.3), transparent 70%);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        .logo-svg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px rgba(220,20,20,0.5));
+        }
+
+        /* Card */
+        .login-card {
+            background: linear-gradient(145deg, #111111, #0d0d0d);
+            border: 1px solid rgba(220,20,20,0.2);
+            border-radius: 20px;
+            padding: 40px 36px;
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.03),
+                0 32px 80px rgba(0,0,0,0.8),
+                inset 0 1px 0 rgba(255,255,255,0.05);
             position: relative;
             overflow: hidden;
         }
 
-        /* Animated background */
-        .bg-orb {
+        .login-card::before {
+            content: '';
             position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.15;
-            pointer-events: none;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #dc1414, #ff4444, #dc1414, transparent);
         }
 
-        .bg-orb-1 {
-            width: 400px; height: 400px;
-            background: #6c63ff;
-            top: -100px; right: -100px;
-            animation: float 8s ease-in-out infinite;
-        }
-
-        .bg-orb-2 {
-            width: 300px; height: 300px;
-            background: #4ecdc4;
-            bottom: -80px; left: -80px;
-            animation: float 10s ease-in-out infinite reverse;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(20px, -20px); }
-        }
-
-        .login-container {
-            width: 420px;
-            background: #1e2130;
-            border: 1px solid #2d3148;
-            border-radius: 24px;
-            padding: 48px 40px;
-            position: relative;
-            z-index: 10;
-            box-shadow: 0 32px 80px rgba(0,0,0,0.5);
-        }
-
-        .login-logo {
+        .card-title {
             text-align: center;
-            margin-bottom: 36px;
+            margin-bottom: 28px;
         }
 
-        .logo-icon-big {
-            width: 72px;
-            height: 72px;
-            background: linear-gradient(135deg, #6c63ff, #4ecdc4);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 34px;
-            margin: 0 auto 16px;
-            box-shadow: 0 8px 32px rgba(108,99,255,0.4);
-        }
-
-        .login-logo h1 {
-            font-size: 24px;
+        .card-title h2 {
+            font-size: 22px;
             font-weight: 800;
-            margin-bottom: 6px;
+            color: #fff;
+            margin-bottom: 4px;
         }
 
-        .login-logo p {
-            font-size: 13px;
-            color: #8892b0;
+        .card-title p {
+            font-size: 12px;
+            color: #555;
         }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #8892b0;
-            margin-bottom: 8px;
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-
-        .input-icon {
-            position: absolute;
-            right: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #5c6480;
-            font-size: 15px;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 13px 44px 13px 16px;
-            background: #0f1117;
-            border: 1px solid #2d3148;
-            border-radius: 12px;
-            color: #e8eaf6;
-            font-size: 14px;
-            font-family: 'Cairo', sans-serif;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            direction: rtl;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #6c63ff;
-            box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
-        }
-
-        .form-input::placeholder { color: #5c6480; }
-
-        .btn-login {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #6c63ff, #8b85ff);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 700;
-            font-family: 'Cairo', sans-serif;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 8px;
-        }
-
-        .btn-login:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(108,99,255,0.4);
-        }
-
-        .btn-login:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
+        /* Alert */
         .alert-error {
-            background: rgba(255,107,107,0.1);
-            border: 1px solid rgba(255,107,107,0.3);
+            background: rgba(220,20,20,0.1);
+            border: 1px solid rgba(220,20,20,0.3);
             color: #ff6b6b;
             padding: 12px 16px;
             border-radius: 10px;
@@ -181,11 +166,109 @@
             gap: 8px;
         }
 
-        .login-footer {
-            margin-top: 28px;
-            text-align: center;
-            font-size: 11px;
-            color: #5c6480;
+        /* Form */
+        .form-group { margin-bottom: 18px; }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #444;
+            font-size: 15px;
+            transition: color 0.2s;
+            z-index: 2;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 44px 14px 44px;
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.3s;
+            direction: rtl;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #dc1414;
+            box-shadow: 0 0 0 3px rgba(220,20,20,0.12), 0 0 20px rgba(220,20,20,0.08);
+            background: #0f0f0f;
+        }
+
+        .form-input:focus + .input-icon { color: #dc1414; }
+        .form-input::placeholder { color: #333; }
+
+        .eye-btn {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #444;
+            cursor: pointer;
+            font-size: 14px;
+            transition: color 0.2s;
+            padding: 4px;
+        }
+
+        .eye-btn:hover { color: #dc1414; }
+
+        /* Login button */
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #dc1414, #aa0000);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1px;
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-login:hover::before { left: 100%; }
+
+        .btn-login:hover {
+            background: linear-gradient(135deg, #ff2020, #cc0000);
+            box-shadow: 0 8px 30px rgba(220,20,20,0.5);
+            transform: translateY(-1px);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .spinner {
@@ -197,114 +280,148 @@
             animation: spin 0.8s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .login-footer {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 11px;
+            color: #333;
         }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f1117; }
-        ::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 3px; }
+        .login-footer span { color: #dc1414; }
     </style>
 </head>
 <body>
-    <div class="bg-orb bg-orb-1"></div>
-    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
 
-    <div class="login-container">
-        <div class="login-logo">
-            <div class="logo-icon-big">🤖</div>
-            <h1>Remix AI</h1>
-            <p>نظام الرد التلقائي على فيسبوك</p>
+    <!-- Particles -->
+    <div class="particles" id="particles"></div>
+
+    <div class="login-wrapper">
+        <!-- Logo -->
+        <div class="logo-section">
+            <div class="logo-img-wrap">
+                <svg class="logo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Shield -->
+                    <path d="M100 10 L175 45 L175 110 Q175 160 100 190 Q25 160 25 110 L25 45 Z"
+                          fill="#111" stroke="#dc1414" stroke-width="3"/>
+                    <!-- R letter stylized -->
+                    <text x="100" y="130" text-anchor="middle" fill="white"
+                          font-family="Arial Black" font-size="80" font-weight="900">R</text>
+                    <!-- Red accent line -->
+                    <path d="M100 185 Q25 155 25 110" fill="none" stroke="#dc1414" stroke-width="4"/>
+                    <path d="M100 185 Q175 155 175 110" fill="none" stroke="#dc1414" stroke-width="4"/>
+                </svg>
+            </div>
         </div>
 
-        <div id="alert" class="alert-error" style="display:none;">
-            <i class="fas fa-exclamation-circle"></i>
-            <span id="alert-message"></span>
-        </div>
-
-        <form id="loginForm" onsubmit="handleLogin(event)">
-            <div class="form-group">
-                <label class="form-label">اسم المستخدم</label>
-                <div class="input-wrapper">
-                    <i class="fas fa-user input-icon"></i>
-                    <input
-                        type="text"
-                        id="username"
-                        class="form-input"
-                        placeholder="أدخل اسم المستخدم"
-                        required
-                        autocomplete="username"
-                    >
-                </div>
+        <!-- Card -->
+        <div class="login-card">
+            <div class="card-title">
+                <h2>مرحباً بك في Remix</h2>
+                <p>نظام الرد التلقائي الذكي</p>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">كلمة المرور</label>
-                <div class="input-wrapper">
-                    <i class="fas fa-lock input-icon"></i>
-                    <input
-                        type="password"
-                        id="password"
-                        class="form-input"
-                        placeholder="أدخل كلمة المرور"
-                        required
-                        autocomplete="current-password"
-                    >
-                </div>
+            <div id="alert" class="alert-error" style="display:none;">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="alert-message"></span>
             </div>
 
-            <button type="submit" class="btn-login" id="loginBtn">
-                <i class="fas fa-sign-in-alt"></i>
-                <span>تسجيل الدخول</span>
-            </button>
-        </form>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <input type="text" id="username" class="form-input"
+                               placeholder="اسم المستخدم" required autocomplete="username">
+                        <i class="fas fa-user input-icon"></i>
+                    </div>
+                </div>
 
-        <div class="login-footer">
-            Remix AI Auto Reply System &copy; 2024
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <input type="password" id="password" class="form-input"
+                               placeholder="كلمة المرور" required autocomplete="current-password">
+                        <i class="fas fa-lock input-icon"></i>
+                        <button type="button" class="eye-btn" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>دخول</span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                Remix AI Auto Reply &copy; 2024 — <span>powered by AI</span>
+            </div>
         </div>
     </div>
 
     <script>
+        // Particles
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 20; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.animationDuration = (Math.random() * 10 + 8) + 's';
+            p.style.animationDelay = (Math.random() * 10) + 's';
+            p.style.width = p.style.height = (Math.random() * 3 + 1) + 'px';
+            container.appendChild(p);
+        }
+
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
         async function handleLogin(e) {
             e.preventDefault();
             const btn = document.getElementById('loginBtn');
             const alert = document.getElementById('alert');
-
             alert.style.display = 'none';
             btn.disabled = true;
-            btn.innerHTML = '<div class="spinner"></div><span>جارٍ تسجيل الدخول...</span>';
-
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            btn.innerHTML = '<div class="spinner"></div><span>جارٍ الدخول...</span>';
 
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password }),
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value
+                    }),
                 });
-
                 const data = await response.json();
-
                 if (response.ok) {
-                    // Store token
                     localStorage.setItem('token', data.access_token);
                     window.location.href = '/dashboard';
                 } else {
-                    showError(data.detail || 'فشل تسجيل الدخول');
+                    showError(data.detail || 'بيانات غير صحيحة');
                 }
-            } catch (err) {
-                showError('خطأ في الاتصال بالخادم');
+            } catch {
+                showError('خطأ في الاتصال');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>تسجيل الدخول</span>';
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>دخول</span>';
             }
         }
 
         function showError(msg) {
-            const alert = document.getElementById('alert');
+            const el = document.getElementById('alert');
             document.getElementById('alert-message').textContent = msg;
-            alert.style.display = 'flex';
+            el.style.display = 'flex';
         }
     </script>
 </body>
