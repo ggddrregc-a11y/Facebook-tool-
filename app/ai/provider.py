@@ -57,7 +57,7 @@ async def generate_reply(comment_text: str, emotion: str) -> str:
             max_tokens=settings.ai_max_tokens,
             temperature=settings.ai_temperature,
         )
-
+        choice = response.choices[0]
         reply = choice.message.content
 
         # Some models return reasoning only — fallback to reasoning content
