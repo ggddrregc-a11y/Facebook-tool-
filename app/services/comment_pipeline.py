@@ -1,4 +1,5 @@
 import json
+import sys
 from datetime import date, datetime, timezone
 from typing import Optional
 
@@ -7,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.ai.emotion_detector import detect_emotion
 from app.ai.provider import generate_reply
 from app.ai.spam_detector import is_spam
+from app.config.settings import get_settings
 from app.core.exceptions import (
     DuplicateCommentException,
     FacebookAPIException,
@@ -51,6 +53,19 @@ class CommentPipeline:
             sender_id=sender_id,
             is_edited=is_edited,
         )
+
+        # ── Guard: ignore the bot's own replies to prevent an infinite loop ──
+        # When the bot posts a reply, Facebook sends a new webhook for that
+        # comment. Without this check the pipeline would try to reply to its
+        # own reply, causing an endless cycle.
+        settings = get_settings()
+        if settings.facebook_page_id and sender_id == settings.facebook_page_id:
+            logger.info(
+                "pipeline_skip_own_reply",
+                comment_id=comment_id,
+                sender_id=sender_id,
+            )
+            return
 
         # Step 1: Check if already processed
         existing = await self.comment_repo.get_by_comment_id(comment_id)
@@ -117,6 +132,12 @@ class CommentPipeline:
                         original_id=duplicate_comment.comment_id,
                     )
                 except FacebookAPIException as e:
+                    # Write to stderr explicitly so Railway surfaces this in error logs.
+                    print(
+                        f"[ERROR] facebook_reply_failed (duplicate) comment_id={comment_id} error={e}",
+                        file=sys.stderr,
+                        flush=True,
+                    )
                     await self.comment_repo.update_reply(
                         comment_id=comment_id,
                         emotion=emotion,
@@ -164,6 +185,12 @@ class CommentPipeline:
                 reply_length=len(ai_reply),
             )
         except FacebookAPIException as e:
+            # Write to stderr explicitly so Railway surfaces this in error logs.
+            print(
+                f"[ERROR] facebook_reply_failed comment_id={comment_id} error={e}",
+                file=sys.stderr,
+                flush=True,
+            )
             await self.comment_repo.update_reply(
                 comment_id=comment_id,
                 emotion=emotion,

@@ -21,6 +21,9 @@ class Settings(BaseSettings):
 
     # Facebook
     page_access_token: str
+    # Page ID used to filter out the bot's own replies and avoid reply loops.
+    # Find it at: facebook.com/<your-page> → About → Page ID
+    facebook_page_id: str = ""
 
     # Database (PostgreSQL or SQLite)
     # PostgreSQL: postgresql+asyncpg://user:pass@host:5432/dbname
