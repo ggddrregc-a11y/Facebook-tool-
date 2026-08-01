@@ -58,8 +58,18 @@ async def generate_reply(comment_text: str, emotion: str) -> str:
             temperature=settings.ai_temperature,
         )
 
-        reply = response.choices[0].message.content
-        if not reply:
+        choice = response.choices[0]
+        reply = choice.message.content
+
+        # Some models return reasoning only — fallback to reasoning content
+        if not reply or not reply.strip():
+            reasoning = getattr(choice.message, "reasoning", None)
+            if reasoning and reasoning.strip():
+                # Extract last sentence from reasoning as reply
+                lines = [l.strip() for l in reasoning.strip().split("\n") if l.strip()]
+                reply = lines[-1] if lines else None
+
+        if not reply or not reply.strip():
             raise AIProviderException("استجابة فارغة من مزود الذكاء الاصطناعي")
 
         # Clean up the reply
