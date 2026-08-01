@@ -58,18 +58,35 @@ async def generate_reply(comment_text: str, emotion: str) -> str:
             temperature=settings.ai_temperature,
         )
 
-        choice = response.choices[0]
         reply = choice.message.content
 
         # Some models return reasoning only — fallback to reasoning content
         if not reply or not reply.strip():
             reasoning = getattr(choice.message, "reasoning", None)
             if reasoning and reasoning.strip():
-                # Extract last sentence from reasoning as reply
                 lines = [l.strip() for l in reasoning.strip().split("\n") if l.strip()]
                 reply = lines[-1] if lines else None
 
         if not reply or not reply.strip():
+            raise AIProviderException("استجابة فارغة من مزود الذكاء الاصطناعي")
+
+        reply = reply.strip()
+
+        # Remove thinking/reasoning blocks like <think>...</think>
+        import re
+        reply = re.sub(r'<think>.*?</think>', '', reply, flags=re.DOTALL).strip()
+
+        # If reply contains quoted Arabic text, extract it
+        # Pattern: last Arabic sentence after all English reasoning
+        arabic_pattern = re.findall(r'[\u0600-\u06FF][^\n]*', reply)
+        if arabic_pattern:
+            # Take the last Arabic line as the actual reply
+            reply = arabic_pattern[-1].strip()
+            # Remove surrounding quotes if present
+            if reply.startswith(('"', "'", "«", "\"")) and reply.endswith(('"', "'", "»", "\"")):
+                reply = reply[1:-1].strip()
+
+        if not reply:
             raise AIProviderException("استجابة فارغة من مزود الذكاء الاصطناعي")
 
         # Clean up the reply
