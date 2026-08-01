@@ -20,7 +20,11 @@ def get_engine():
     global _engine
     if _engine is None:
         settings = get_settings()
-        connect_args = {"ssl": "require"} if "supabase" in settings.database_url else {"ssl": "prefer"}
+        is_supabase = "supabase" in settings.database_url
+        connect_args = {
+            "ssl": "require" if is_supabase else "prefer",
+            "statement_cache_size": 0,
+        }
         _engine = create_async_engine(
             settings.database_url,
             echo=settings.debug,
