@@ -20,13 +20,25 @@ def get_engine():
     global _engine
     if _engine is None:
         settings = get_settings()
-        connect_args = {"ssl": "require"} if "supabase" in settings.database_url else {"ssl": "prefer"}
-        _engine = create_async_engine(
-            settings.database_url,
-            echo=settings.debug,
-            poolclass=NullPool,
-            connect_args=connect_args,
-        )
+        database_url = settings.database_url
+
+        # SQLite support
+        if database_url.startswith("sqlite"):
+            connect_args = {"check_same_thread": False}
+            _engine = create_async_engine(
+                database_url,
+                echo=settings.debug,
+                connect_args=connect_args,
+            )
+        else:
+            # PostgreSQL / Supabase
+            connect_args = {"ssl": "require"} if "supabase" in database_url else {"ssl": "prefer"}
+            _engine = create_async_engine(
+                database_url,
+                echo=settings.debug,
+                poolclass=NullPool,
+                connect_args=connect_args,
+            )
     return _engine
 
 
@@ -57,8 +69,13 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
+    import os
     from app.models.base import Base
     engine = get_engine()
+    settings = get_settings()
+    # Create data directory for SQLite
+    if settings.database_url.startswith("sqlite"):
+        os.makedirs("data", exist_ok=True)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("database_initialized")

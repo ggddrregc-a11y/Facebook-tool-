@@ -22,8 +22,10 @@ class Settings(BaseSettings):
     # Facebook
     page_access_token: str
 
-    # Database
-    database_url: str
+    # Database (PostgreSQL or SQLite)
+    # PostgreSQL: postgresql+asyncpg://user:pass@host:5432/dbname
+    # SQLite:     sqlite+aiosqlite:///./data/app.db
+    database_url: str = "sqlite+aiosqlite:///./data/app.db"
 
     # OpenAI Compatible API
     openai_api_key: str
