@@ -42,9 +42,16 @@ async def receive_webhook(request: Request) -> Response:
     signature = request.headers.get("X-Hub-Signature-256", "")
 
     if not verify_facebook_signature(body, signature):
-        logger.warning("webhook_invalid_signature", signature=signature[:20])
+        logger.warning(
+            "webhook_invalid_signature",
+            signature_present=bool(signature),
+            signature_prefix=signature[:30] if signature else "EMPTY",
+            body_length=len(body),
+        )
         # Return 200 to avoid Facebook retries for invalid signatures
         return Response(content="ok", status_code=200)
+
+    logger.info("webhook_signature_ok", body_length=len(body))
 
     try:
         payload = await request.json()
