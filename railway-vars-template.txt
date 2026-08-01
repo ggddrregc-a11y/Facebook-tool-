@@ -1,0 +1,13 @@
+APP_SECRET=ضع_هنا_مفتاح_سري_طويل_32_حرف
+VERIFY_TOKEN=ضع_هنا_كلمة_سرية_للويب_هوك
+SECRET_KEY=ضع_هنا_مفتاح_سري_طويل_32_حرف
+PAGE_ACCESS_TOKEN=ضع_هنا_رمز_وصول_الصفحة_الدائم
+OPENAI_API_KEY=ضع_هنا_مفتاح_openrouter
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+MODEL_NAME=qwen/qwen3-8b:free
+JWT_SECRET=ضع_هنا_مفتاح_jwt_طويل_32_حرف
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=ضع_هنا_كلمة_مرور_قوية
+LOG_LEVEL=INFO
+CACHE_ENABLED=false
+DEBUG=false

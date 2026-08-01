@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% set active_page = "test" %}
+
+{% block title %}اختبار الرد{% endblock %}
+{% block page_title %}اختبار الرد التلقائي{% endblock %}
+
+{% block extra_styles %}
+<style>
+.test-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.result-box {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 24px;
+    margin-top: 24px;
+    display: none;
+}
+
+.result-box.visible { display: block; }
+
+.result-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.result-value {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.result-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.ai-reply-box {
+    background: linear-gradient(135deg, rgba(108,99,255,0.1), rgba(78,205,196,0.08));
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 14px;
+    padding: 20px;
+}
+
+.ai-reply-text {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+.spinner-overlay {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+}
+
+.spinner-big {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(108,99,255,0.2);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="test-container">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-flask"></i>
+                اختبار ردود الذكاء الاصطناعي
+            </div>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
+            اكتب تعليقاً لاختبار كيف سيرد النظام عليه دون نشر أي شيء على فيسبوك.
+        </p>
+
+        <div class="form-group">
+            <label class="form-label">نص التعليق</label>
+            <textarea
+                id="commentText"
+                class="form-input"
+                placeholder="اكتب تعليقاً هنا مثل: ما شاء الله عليكم، أو: متى سيتوفر المنتج؟"
+                rows="4"
+                style="resize: vertical;"
+            ></textarea>
+        </div>
+
+        <button class="btn btn-primary" onclick="testReply()" id="testBtn" style="width:100%; justify-content: center;">
+            <i class="fas fa-robot"></i>
+            اختبار الرد
+        </button>
+    </div>
+
+    <!-- Loading -->
+    <div class="spinner-overlay" id="loadingBox">
+        <div class="spinner-big"></div>
+        <p>جارٍ تحليل التعليق وتوليد الرد...</p>
+    </div>
+
+    <!-- Result -->
+    <div class="result-box" id="resultBox">
+        <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-check-circle" style="color: var(--accent-success); font-size: 18px;"></i>
+            <span style="font-size: 15px; font-weight: 600;">نتيجة التحليل</span>
+        </div>
+
+        <div class="result-grid">
+            <div class="result-item">
+                <div class="result-label">الشعور المكتشف</div>
+                <div class="result-value" id="resultEmotion">—</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">حالة التعليق</div>
+                <div class="result-value" id="resultSpam">—</div>
+            </div>
+        </div>
+
+        <div class="result-item" id="replySection">
+            <div class="result-label" style="margin-bottom: 12px;">
+                <i class="fas fa-robot" style="color: var(--accent-primary);"></i>
+                الرد المقترح من الذكاء الاصطناعي
+            </div>
+            <div class="ai-reply-box">
+                <div class="ai-reply-text" id="resultReply">—</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error -->
+    <div class="alert alert-error" id="errorBox" style="display:none; margin-top: 20px;">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorMessage"></span>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function testReply() {
+    const text = document.getElementById('commentText').value.trim();
+    if (!text) {
+        showError('يرجى إدخال نص التعليق');
+        return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    document.getElementById('loadingBox').style.display = 'block';
+    document.getElementById('resultBox').classList.remove('visible');
+    document.getElementById('errorBox').style.display = 'none';
+    document.getElementById('testBtn').disabled = true;
+
+    try {
+        const response = await fetch('/api/reply-test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ comment_text: text })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            throw new Error(data.detail || 'خطأ في الخادم');
+        }
+
+        // Show result
+        const emotionColors = {
+            "دعاء": "#a78bfa", "حزن": "#60a5fa", "فرح": "#fbbf24",
+            "حب": "#f472b6", "إعجاب": "#34d399", "سؤال": "#67e8f9",
+            "غضب": "#f87171", "إيموجي": "#fb923c", "محايد": "#94a3b8"
+        };
+
+        const emotionEl = document.getElementById('resultEmotion');
+        emotionEl.textContent = data.emotion;
+        emotionEl.style.color = emotionColors[data.emotion] || '#8892b0';
+
+        const spamEl = document.getElementById('resultSpam');
+        if (data.is_spam) {
+            spamEl.innerHTML = '<span style="color:#ffd166;">⚠️ سبام - تم الرفض</span>';
+        } else {
+            spamEl.innerHTML = '<span style="color:#06d6a0;">✅ تعليق طبيعي</span>';
+        }
+
+        document.getElementById('resultReply').textContent = data.ai_reply;
+        document.getElementById('resultBox').classList.add('visible');
+
+    } catch (err) {
+        showError(err.message || 'حدث خطأ غير متوقع');
+    } finally {
+        document.getElementById('loadingBox').style.display = 'none';
+        document.getElementById('testBtn').disabled = false;
+    }
+}
+
+function showError(msg) {
+    document.getElementById('errorMessage').textContent = msg;
+    document.getElementById('errorBox').style.display = 'flex';
+}
+
+// Allow Enter to submit (Shift+Enter for newline)
+document.getElementById('commentText').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        testReply();
+    }
+});
+</script>
+{% endblock %}
