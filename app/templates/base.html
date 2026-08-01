@@ -591,6 +591,11 @@
             </a>
 
             <div class="nav-label" style="margin-top:8px;">الإدارة</div>
+            <a href="/dashboard/posts" class="nav-item {% if active_page == 'posts' %}active{% endif %}">
+                <i class="fas fa-robot"></i>
+                <span>منشورات Grok</span>
+                {% if pending_posts_count %}<span style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-right:auto;">{{ pending_posts_count }}</span>{% endif %}
+            </a>
             <a href="/dashboard/comments" class="nav-item {% if active_page == 'comments' %}active{% endif %}">
                 <i class="fas fa-comments"></i>
                 <span>التعليقات</span>
@@ -601,8 +606,12 @@
             </a>
 
             <div class="nav-label" style="margin-top:8px;">الأدوات</div>
+            <a href="/dashboard/keys" class="nav-item {% if active_page == 'keys' %}active{% endif %}">
+                <i class="fas fa-key"></i>
+                <span>مفاتيح Grok API</span>
+            </a>
             <a href="/dashboard/test" class="nav-item {% if active_page == 'test' %}active{% endif %}">
-                <i class="fas fa-robot"></i>
+                <i class="fas fa-flask"></i>
                 <span>اختبار الرد</span>
             </a>
             <a href="/docs" target="_blank" class="nav-item">

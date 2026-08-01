@@ -11,6 +11,7 @@ from slowapi.util import get_remote_address
 
 from app.ai.provider import close_ai_client
 from app.api import auth, comments, dashboard, health, logs, reply_test, stats, webhook
+from app.api import posts, keys
 from app.config.settings import get_settings
 from app.core.exceptions import AppException
 from app.core.logging import get_logger, setup_logging
@@ -18,6 +19,7 @@ from app.database.session import close_db, init_db, get_session_factory
 from app.facebook.client import close_http_client
 from app.middlewares.logging_middleware import RequestLoggingMiddleware
 from app.services.auth_service import AuthService
+from app.workers.post_scheduler import start_post_scheduler, stop_post_scheduler
 
 setup_logging()
 logger = get_logger(__name__)
@@ -27,7 +29,7 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     settings = get_settings()
-    logger.info("app_starting", model=settings.model_name)
+    logger.info("app_starting", model=settings.grok_model)
 
     # Initialize database
     await init_db()
@@ -39,10 +41,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         await auth_service.ensure_admin_exists()
         await session.commit()
 
+    # Start background post scheduler
+    start_post_scheduler()
+
     logger.info("app_ready")
     yield
 
     # Cleanup
+    await stop_post_scheduler()
     await close_ai_client()
     await close_http_client()
     await close_db()
@@ -53,9 +59,9 @@ def create_app() -> FastAPI:
     settings = get_settings()
 
     app = FastAPI(
-        title="Remix AI Auto Reply",
-        description="نظام الرد التلقائي على تعليقات فيسبوك باستخدام الذكاء الاصطناعي",
-        version="1.0.0",
+        title="Grok AI Social Manager",
+        description="نظام إدارة المحتوى الاجتماعي بالذكاء الاصطناعي Grok",
+        version="2.0.0",
         docs_url="/docs",
         redoc_url="/redoc",
         lifespan=lifespan,
@@ -105,6 +111,8 @@ def create_app() -> FastAPI:
     app.include_router(stats.router)
     app.include_router(reply_test.router)
     app.include_router(logs.router)
+    app.include_router(posts.router)
+    app.include_router(keys.router)
     app.include_router(dashboard.router)
 
     return app

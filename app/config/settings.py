@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Optional
+from typing import Optional, List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,24 +21,38 @@ class Settings(BaseSettings):
 
     # Facebook
     page_access_token: str
-    # Page ID used to filter out the bot's own replies and avoid reply loops.
-    # Find it at: facebook.com/<your-page> → About → Page ID
     facebook_page_id: str = ""
 
-    # Database (PostgreSQL or SQLite)
-    # PostgreSQL: postgresql+asyncpg://user:pass@host:5432/dbname
-    # SQLite:     sqlite+aiosqlite:///./data/app.db
+    # Database
     database_url: str = "sqlite+aiosqlite:///./data/app.db"
 
-    # OpenAI Compatible API
-    openai_api_key: str
-    openai_base_url: str = "https://openrouter.ai/api/v1"
-    model_name: str = "qwen/qwen3-8b:free"
+    # ── Grok / xAI Multi-Key Support ──────────────────────────────────────────
+    # Primary key (required)
+    grok_api_key: str = ""
+
+    # Extra keys — add GROK_API_KEY_2, GROK_API_KEY_3 … GROK_API_KEY_10 in env
+    grok_api_key_2: str = ""
+    grok_api_key_3: str = ""
+    grok_api_key_4: str = ""
+    grok_api_key_5: str = ""
+    grok_api_key_6: str = ""
+    grok_api_key_7: str = ""
+    grok_api_key_8: str = ""
+    grok_api_key_9: str = ""
+    grok_api_key_10: str = ""
+
+    grok_base_url: str = "https://api.x.ai/v1"
+    grok_model: str = "grok-3-mini"
+
+    # Legacy OpenAI-compatible fallback (kept for backward compat)
+    openai_api_key: str = ""
+    openai_base_url: str = "https://api.x.ai/v1"
+    model_name: str = "grok-3-mini"
 
     # JWT
     jwt_secret: str
     jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 1440  # 24 hours
+    jwt_expire_minutes: int = 1440
 
     # Admin
     admin_username: str
@@ -60,7 +74,19 @@ class Settings(BaseSettings):
     ai_max_comment_length: int = 500
     ai_min_comment_length: int = 2
 
-    # System Prompt (Arabic)
+    # Post Generation Settings
+    post_max_tokens: int = 500
+    post_temperature: float = 0.85
+    post_auto_approve: bool = False   # إذا True ينشر مباشرة بدون مراجعة
+    post_scheduler_interval_seconds: int = 60  # كل كم ثانية يتحقق السكيدولر
+
+    # Image Generation (DALL-E compatible endpoint if available)
+    image_generation_enabled: bool = False
+    image_generation_api_key: str = ""
+    image_generation_base_url: str = "https://api.openai.com/v1"
+    image_generation_model: str = "dall-e-3"
+
+    # System Prompt for comments
     system_prompt: str = (
         "أنت شخص مصري بيرد على تعليقات صفحة Remix على فيسبوك. "
         "**مهم جداً:** ردك يكون بالعربية العامية المصرية فقط بدون أي تفكير أو شرح. "
@@ -77,6 +103,36 @@ class Settings(BaseSettings):
         "لا تدخل في السياسة أو الجدالات. "
         "مثال على ردود صح: 'يسلموا يا صديقي!' أو 'ربنا يكرمك' أو 'شكراً ليك جداً'"
     )
+
+    # System Prompt for post generation
+    post_system_prompt: str = (
+        "أنت مدير محتوى إبداعي لصفحة Remix على فيسبوك. "
+        "مهمتك توليد منشورات جذابة وأصيلة بالعربية. "
+        "الأسلوب: عامية مصرية ودودة، طريفة، وقريبة من الجمهور. "
+        "المنشور يكون بين 3-6 جمل، مع هاشتاقات مناسبة في النهاية. "
+        "لا تستخدم أسلوب الإعلانات أو الرسمي. "
+        "اكتب المنشور مباشرة بدون مقدمات أو شرح."
+    )
+
+    @property
+    def all_grok_keys(self) -> List[str]:
+        """Return all configured Grok API keys as a list (no empty strings)."""
+        keys = [
+            self.grok_api_key,
+            self.grok_api_key_2,
+            self.grok_api_key_3,
+            self.grok_api_key_4,
+            self.grok_api_key_5,
+            self.grok_api_key_6,
+            self.grok_api_key_7,
+            self.grok_api_key_8,
+            self.grok_api_key_9,
+            self.grok_api_key_10,
+        ]
+        # Fall back to legacy openai_api_key
+        if not any(k.strip() for k in keys) and self.openai_api_key:
+            return [self.openai_api_key]
+        return [k for k in keys if k and k.strip()]
 
 
 @lru_cache()

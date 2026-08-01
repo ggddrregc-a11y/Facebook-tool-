@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from app.middlewares.auth_middleware import get_dashboard_user
 from app.repositories.comment_repository import CommentRepository
 from app.repositories.log_repository import LogRepository
+from app.repositories.post_repository import PostRepository
 from app.schemas.comment import CommentSearchParams
 from app.services.stats_service import StatsService
 
@@ -48,6 +49,9 @@ async def dashboard(request: Request):
             comment_repo = CommentRepository(db)
             recent_comments = await comment_repo.get_recent(limit=10)
 
+            post_repo = PostRepository(db)
+            post_counts = await post_repo.count_by_status()
+
             return templates.TemplateResponse(
                 "dashboard.html",
                 {
@@ -55,6 +59,7 @@ async def dashboard(request: Request):
                     "user": user,
                     "stats": stats,
                     "recent_comments": recent_comments,
+                    "post_counts": post_counts,
                 },
             )
         except Exception:
@@ -141,8 +146,59 @@ async def test_page(request: Request):
     user = _require_dashboard_auth(request)
     if not user:
         return RedirectResponse(url="/login")
+    return templates.TemplateResponse("test.html", {"request": request, "user": user})
+
+
+@router.get("/dashboard/posts", response_class=HTMLResponse)
+async def posts_page(
+    request: Request,
+    status: str = Query(None),
+    page: int = Query(1, ge=1),
+):
+    user = _require_dashboard_auth(request)
+    if not user:
+        return RedirectResponse(url="/login")
+
+    from app.database.session import get_session_factory
+    session_factory = get_session_factory()
+    async with session_factory() as db:
+        repo = PostRepository(db)
+        per_page = 20
+        offset = (page - 1) * per_page
+        posts = await repo.list_posts(status=status or None, limit=per_page, offset=offset)
+        total = await repo.count(status=status or None)
+        total_pages = (total + per_page - 1) // per_page
+        counts = await repo.count_by_status()
+
+        return templates.TemplateResponse(
+            "posts.html",
+            {
+                "request": request,
+                "user": user,
+                "posts": posts,
+                "total": total,
+                "page": page,
+                "total_pages": total_pages,
+                "current_status": status or "",
+                "counts": counts,
+            },
+        )
+
+
+@router.get("/dashboard/keys", response_class=HTMLResponse)
+async def keys_page(request: Request):
+    user = _require_dashboard_auth(request)
+    if not user:
+        return RedirectResponse(url="/login")
+
+    from app.ai.provider import get_keys_status
+    key_statuses = get_keys_status()
 
     return templates.TemplateResponse(
-        "test.html",
-        {"request": request, "user": user},
+        "keys.html",
+        {
+            "request": request,
+            "user": user,
+            "key_statuses": key_statuses,
+        },
     )

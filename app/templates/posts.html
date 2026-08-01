@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}إدارة المنشورات{% endblock %}
+{% block page_title %}إدارة المنشورات بـ Grok{% endblock %}
+
+{% block content %}
+<style>
+.filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; align-items:center; }
+.filter-btn { padding:7px 16px; border-radius:20px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-2); font-family:'Cairo',sans-serif; font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; text-decoration:none; }
+.filter-btn.active, .filter-btn:hover { border-color:var(--red); color:var(--red); background:var(--red-glow); }
+.badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; }
+.badge-draft { background:#333; color:#888; }
+.badge-pending { background:rgba(245,158,11,.15); color:#f59e0b; }
+.badge-approved { background:rgba(59,130,246,.15); color:#60a5fa; }
+.badge-scheduled { background:rgba(139,92,246,.15); color:#a78bfa; }
+.badge-published { background:rgba(34,197,94,.15); color:#22c55e; }
+.badge-failed { background:rgba(239,68,68,.15); color:#ef4444; }
+.badge-rejected { background:rgba(156,163,175,.15); color:#9ca3af; }
+.post-card { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:18px 20px; margin-bottom:12px; transition:border-color .2s; }
+.post-card:hover { border-color:var(--border-red); }
+.post-meta { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.post-content { color:var(--text); font-size:14px; line-height:1.7; margin-bottom:12px; white-space:pre-wrap; }
+.post-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.btn-sm { padding:6px 14px; border-radius:8px; border:none; font-family:'Cairo',sans-serif; font-size:12px; font-weight:700; cursor:pointer; transition:all .2s; }
+.btn-approve { background:rgba(34,197,94,.15); color:#22c55e; }
+.btn-approve:hover { background:rgba(34,197,94,.3); }
+.btn-reject { background:rgba(239,68,68,.1); color:#ef4444; }
+.btn-reject:hover { background:rgba(239,68,68,.2); }
+.btn-publish { background:var(--red); color:#fff; }
+.btn-publish:hover { background:var(--red-light); }
+.btn-delete { background:rgba(255,255,255,.05); color:var(--text-3); }
+.btn-delete:hover { background:rgba(239,68,68,.1); color:#ef4444; }
+.btn-insights { background:rgba(59,130,246,.1); color:#60a5fa; }
+.post-stats { display:flex; gap:16px; font-size:12px; color:var(--text-2); }
+.post-stats span { display:flex; align-items:center; gap:4px; }
+.generate-section { background:var(--bg-card); border:1px solid var(--border-red); border-radius:14px; padding:20px; margin-bottom:24px; }
+.generate-title { font-size:15px; font-weight:700; color:var(--red); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.gen-row { display:flex; gap:10px; flex-wrap:wrap; }
+.gen-input { flex:1; min-width:200px; padding:10px 14px; background:var(--bg-2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:'Cairo',sans-serif; font-size:13px; outline:none; transition:border-color .2s; }
+.gen-input:focus { border-color:var(--red); }
+.gen-check { display:flex; align-items:center; gap:6px; color:var(--text-2); font-size:13px; cursor:pointer; }
+.gen-check input { accent-color:var(--red); width:16px; height:16px; cursor:pointer; }
+.btn-generate { padding:10px 24px; background:var(--red); color:#fff; border:none; border-radius:10px; font-family:'Cairo',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all .2s; white-space:nowrap; }
+.btn-generate:hover { background:var(--red-light); box-shadow:0 0 12px rgba(220,20,20,.4); }
+.btn-generate:disabled { opacity:.5; cursor:not-allowed; }
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--bg-card); border:1px solid var(--border-red); border-radius:16px; padding:28px; width:90%; max-width:520px; }
+.modal-title { font-size:16px; font-weight:700; margin-bottom:18px; }
+.modal-body { margin-bottom:20px; }
+.modal-footer { display:flex; gap:10px; justify-content:flex-end; }
+textarea.gen-input { height:100px; resize:vertical; }
+.schedule-input { padding:10px 14px; background:var(--bg-2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:'Cairo',sans-serif; font-size:13px; outline:none; width:100%; margin-top:8px; }
+.schedule-input:focus { border-color:var(--red); }
+.empty-state { text-align:center; padding:60px 20px; color:var(--text-3); }
+.empty-state i { font-size:40px; margin-bottom:16px; color:var(--text-3); }
+.counts-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.count-chip { padding:6px 12px; border-radius:20px; background:var(--bg-card); border:1px solid var(--border); font-size:12px; color:var(--text-2); }
+.count-chip strong { color:var(--text); }
+</style>
+
+<!-- Generate Section -->
+<div class="generate-section">
+    <div class="generate-title"><i class="fas fa-robot"></i> توليد منشور جديد بـ Grok</div>
+    <div class="gen-row">
+        <input class="gen-input" id="topicInput" placeholder="موضوع المنشور (اختياري — يولد Grok موضوعاً إذا تُرك فارغاً)" />
+        <label class="gen-check">
+            <input type="checkbox" id="autoPublish"> نشر مباشر
+        </label>
+        <label class="gen-check">
+            <input type="checkbox" id="genImage"> توليد صورة
+        </label>
+        <button class="btn-generate" id="generateBtn" onclick="generatePost()">
+            <i class="fas fa-magic"></i> ولّد منشور
+        </button>
+    </div>
+</div>
+
+<!-- Counts -->
+<div class="counts-row">
+    <div class="count-chip">الكل <strong>{{ counts.values() | sum }}</strong></div>
+    {% for status_key, cnt in counts.items() %}
+    <div class="count-chip">{{ status_key }} <strong>{{ cnt }}</strong></div>
+    {% endfor %}
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <a class="filter-btn {% if not current_status %}active{% endif %}" href="/dashboard/posts">الكل</a>
+    <a class="filter-btn {% if current_status == 'pending_approval' %}active{% endif %}" href="/dashboard/posts?status=pending_approval">بانتظار المراجعة</a>
+    <a class="filter-btn {% if current_status == 'approved' %}active{% endif %}" href="/dashboard/posts?status=approved">معتمد</a>
+    <a class="filter-btn {% if current_status == 'scheduled' %}active{% endif %}" href="/dashboard/posts?status=scheduled">مجدول</a>
+    <a class="filter-btn {% if current_status == 'published' %}active{% endif %}" href="/dashboard/posts?status=published">منشور</a>
+    <a class="filter-btn {% if current_status == 'failed' %}active{% endif %}" href="/dashboard/posts?status=failed">فشل</a>
+    <a class="filter-btn {% if current_status == 'draft' %}active{% endif %}" href="/dashboard/posts?status=draft">مسودة</a>
+</div>
+
+<!-- Posts List -->
+{% if posts %}
+{% for post in posts %}
+<div class="post-card" id="post-{{ post.id }}">
+    <div class="post-meta">
+        <span class="badge badge-{{ post.status }}">
+            {% if post.status == 'draft' %}مسودة
+            {% elif post.status == 'pending_approval' %}بانتظار المراجعة
+            {% elif post.status == 'approved' %}معتمد
+            {% elif post.status == 'scheduled' %}مجدول
+            {% elif post.status == 'published' %}منشور ✓
+            {% elif post.status == 'failed' %}فشل
+            {% elif post.status == 'rejected' %}مرفوض
+            {% else %}{{ post.status }}{% endif %}
+        </span>
+        {% if post.topic %}<span style="color:var(--text-3); font-size:12px;">{{ post.topic }}</span>{% endif %}
+        {% if post.scheduled_at %}<span style="color:#a78bfa; font-size:12px;"><i class="fas fa-clock"></i> {{ post.scheduled_at.strftime('%Y-%m-%d %H:%M') }}</span>{% endif %}
+        {% if post.facebook_post_id %}<span style="color:#22c55e; font-size:12px;"><i class="fab fa-facebook"></i> {{ post.facebook_post_id }}</span>{% endif %}
+        <span style="color:var(--text-3); font-size:11px; margin-right:auto;">{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+    </div>
+
+    <div class="post-content">{{ post.content }}</div>
+
+    {% if post.status == 'published' %}
+    <div class="post-stats" style="margin-bottom:12px;">
+        <span><i class="fas fa-heart" style="color:#ef4444;"></i> {{ post.reactions_count }}</span>
+        <span><i class="fas fa-comment" style="color:#60a5fa;"></i> {{ post.comments_count }}</span>
+        <span><i class="fas fa-share" style="color:#22c55e;"></i> {{ post.shares_count }}</span>
+        <span><i class="fas fa-eye" style="color:#f59e0b;"></i> {{ post.reach }}</span>
+    </div>
+    {% endif %}
+
+    {% if post.error_message %}<div style="color:#ef4444; font-size:12px; margin-bottom:10px;">⚠ {{ post.error_message }}</div>{% endif %}
+    {% if post.rejection_reason %}<div style="color:#9ca3af; font-size:12px; margin-bottom:10px;">رُفض: {{ post.rejection_reason }}</div>{% endif %}
+
+    <div class="post-actions">
+        {% if post.status == 'pending_approval' %}
+        <button class="btn-sm btn-approve" onclick="approvePost({{ post.id }}, true)"><i class="fas fa-check"></i> اعتمد وانشر</button>
+        <button class="btn-sm btn-approve" onclick="showScheduleModal({{ post.id }})"><i class="fas fa-clock"></i> جدول</button>
+        <button class="btn-sm btn-reject" onclick="rejectPost({{ post.id }})"><i class="fas fa-times"></i> ارفض</button>
+        {% endif %}
+        {% if post.status in ('approved', 'failed') %}
+        <button class="btn-sm btn-publish" onclick="publishNow({{ post.id }})"><i class="fas fa-paper-plane"></i> انشر الآن</button>
+        {% endif %}
+        {% if post.status == 'published' and post.facebook_post_id %}
+        <button class="btn-sm btn-insights" onclick="refreshInsights({{ post.id }})"><i class="fas fa-chart-bar"></i> تحديث إحصائيات</button>
+        {% endif %}
+        {% if post.status != 'published' %}
+        <button class="btn-sm btn-delete" onclick="deletePost({{ post.id }})"><i class="fas fa-trash"></i></button>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div style="display:flex; gap:8px; justify-content:center; margin-top:20px;">
+    {% for p in range(1, total_pages + 1) %}
+    <a href="/dashboard/posts?status={{ current_status }}&page={{ p }}" class="filter-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-robot"></i>
+    <div>لا توجد منشورات بعد. استخدم زر "ولّد منشور" لإنشاء أول منشور!</div>
+</div>
+{% endif %}
+
+<!-- Schedule Modal -->
+<div class="modal-overlay" id="scheduleModal">
+    <div class="modal">
+        <div class="modal-title"><i class="fas fa-clock"></i> جدولة المنشور</div>
+        <div class="modal-body">
+            <label style="color:var(--text-2); font-size:13px;">وقت النشر:</label>
+            <input type="datetime-local" class="schedule-input" id="scheduleDateTime" />
+        </div>
+        <div class="modal-footer">
+            <button class="btn-sm btn-delete" onclick="closeModal()">إلغاء</button>
+            <button class="btn-sm btn-publish" onclick="confirmSchedule()">جدول</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let schedulePostId = null;
+
+async function generatePost() {
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التوليد...';
+    const topic = document.getElementById('topicInput').value.trim();
+    const autoPublish = document.getElementById('autoPublish').checked;
+    const genImage = document.getElementById('genImage').checked;
+    try {
+        const r = await fetch('/api/posts/generate', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ topic: topic || null, auto_publish: autoPublish, generate_image: genImage })
+        });
+        if (!r.ok) { const e = await r.json(); alert('خطأ: ' + (e.detail || 'حدث خطأ')); }
+        else { location.reload(); }
+    } catch(e) { alert('خطأ في الاتصال'); }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic"></i> ولّد منشور'; }
+}
+
+async function approvePost(id, publishNow = false, scheduleAt = null) {
+    const body = { publish_now: publishNow };
+    if (scheduleAt) body.schedule_at = scheduleAt;
+    const r = await fetch(`/api/posts/${id}/approve`, {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    if (!r.ok) { const e = await r.json(); alert('خطأ: ' + (e.detail || 'حدث خطأ')); }
+    else location.reload();
+}
+
+async function rejectPost(id) {
+    const reason = prompt('سبب الرفض (اختياري):');
+    if (reason === null) return;
+    const r = await fetch(`/api/posts/${id}/reject`, {
+        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ reason })
+    });
+    if (!r.ok) { const e = await r.json(); alert('خطأ: ' + e.detail); }
+    else location.reload();
+}
+
+async function publishNow(id) {
+    if (!confirm('تأكيد نشر المنشور على فيسبوك الآن؟')) return;
+    const r = await fetch(`/api/posts/${id}/publish`, { method: 'POST' });
+    if (!r.ok) { const e = await r.json(); alert('خطأ: ' + e.detail); }
+    else location.reload();
+}
+
+async function deletePost(id) {
+    if (!confirm('حذف هذا المنشور؟')) return;
+    const r = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+    if (!r.ok) { const e = await r.json(); alert('خطأ: ' + e.detail); }
+    else document.getElementById(`post-${id}`).remove();
+}
+
+async function refreshInsights(id) {
+    const r = await fetch(`/api/posts/${id}/insights`, { method: 'POST' });
+    if (!r.ok) alert('خطأ في تحديث الإحصائيات');
+    else location.reload();
+}
+
+function showScheduleModal(id) {
+    schedulePostId = id;
+    // Default to 1 hour from now
+    const dt = new Date(Date.now() + 3600000);
+    document.getElementById('scheduleDateTime').value = dt.toISOString().slice(0, 16);
+    document.getElementById('scheduleModal').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('scheduleModal').classList.remove('open');
+    schedulePostId = null;
+}
+
+function confirmSchedule() {
+    const dt = document.getElementById('scheduleDateTime').value;
+    if (!dt) { alert('اختر وقت الجدولة'); return; }
+    closeModal();
+    approvePost(schedulePostId, false, new Date(dt).toISOString());
+}
+</script>
+{% endblock %}
